@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>יוצאים לטייל? – איך פרספטרון מחליט</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#38bdf8;--red:#fb7185;--green:#4ade80;--yellow:#fde047;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.16)}
+*{box-sizing:border-box}
+body{font-family:'Rubik','Segoe UI',Arial,sans-serif;background:radial-gradient(circle at 20% 0%,#312e81 0%,#0f172a 55%) fixed;color:#e2e8f0;text-align:center;padding:14px;margin:0;min-height:100vh}
+.container{max-width:1100px;margin:0 auto}
+.nav{display:flex;justify-content:space-between;font-size:13px}.nav a{color:#a5b4fc;text-decoration:none}
+h1{font-size:2rem;font-weight:800;margin:6px 0 4px;background:linear-gradient(90deg,var(--blue),#a78bfa,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:0 0 12px;color:#cbd5e1;font-size:1.05rem}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.math{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.sl{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:15px;padding:4px 8px;border-radius:10px;transition:background .3s}
+.sl.hl{background:rgba(253,224,71,.16);outline:1px solid var(--yellow)}
+.sl span{flex:1;text-align:right}
+.sl b{min-width:3ch;text-align:center;font-size:17px}
+input[type=range]{width:150px;accent-color:#a78bfa;direction:ltr}
+.formula-box{background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:10px;margin-bottom:10px;font-size:1.15rem;border:1px dashed var(--line)}
+#calc{font-size:18px;line-height:2.0}
+#z{font-size:2.2rem;font-weight:800;color:#c4b5fd;margin-top:4px}
+#res{font-size:2.1rem;font-weight:800;margin-top:6px}
+.ok{color:var(--green)}.bad{color:var(--red)}
+#meter{direction:ltr;position:relative;height:16px;border-radius:99px;margin:14px 8px 4px;background:linear-gradient(90deg,#fb7185 50%,#4ade80 50%)}
+#mk{position:absolute;top:-5px;width:6px;height:26px;background:#fff;border-radius:3px;box-shadow:0 0 10px #fff;transition:left .25s}
+.mlab{direction:ltr;display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin:0 8px}
+button{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:0;padding:10px 20px;border-radius:999px;cursor:pointer;font:600 15px 'Rubik',Arial,sans-serif}
+button.alt{background:linear-gradient(135deg,#64748b,#334155)}
+#cap{margin-top:10px;background:rgba(253,224,71,.14);border:1px solid var(--yellow);border-radius:14px;padding:10px;font-size:1.1rem;font-weight:600;min-height:3em}
+.story{margin-top:14px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="perceptron.html">→ המעבדה: קו הפרדה</a><a href="perceptron_learning.html">איך המכונה לומדת? ←</a></div>
+  <h1>🤔 יוצאים לטייל? איך פרספטרון מחליט</h1>
+  <p class="sub">הוא מקבל נתונים (<span class="math">x₁, x₂</span>), נותן לכל אחד חשיבות (<span class="math">w₁, w₂</span>), מוסיף הטיה (<span class="math">b</span>) ובודק: האם <span class="math">z ≥ 0</span> ? &nbsp;זיזו את הסליידרים וראו מה קורה.</p>
+
+  <div class="two">
+    <div class="card"><h3 style="margin:0 0 6px">🎚️ הנתונים וההעדפות</h3><div id="sliders"></div></div>
+    <div class="card">
+      <h3 style="margin:0 0 4px">🧮 החישוב</h3>
+      <div class="formula-box math"><b>z = w₁x₁ + w₂x₂ + b</b></div>
+      <div id="calc" class="math"></div>
+      <div id="z" class="math"></div>
+      <div id="meter"><div id="mk"></div></div>
+      <div class="mlab"><span>−40</span><span>z = 0</span><span>+40</span></div>
+      <div id="res"></div>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="row" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="pl" onclick="story()">🎬 הדגמה אוטומטית</button>
+      <button class="alt" onclick="resetV()">↺ איפוס</button>
+    </div>
+    <div id="cap">בחרו: מה חשוב לכם יותר – מזג האוויר או החברים?</div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id),fm=v=>String(v).replace('-','−'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const cfg=[['x1','x₁ מזג אוויר טוב',0,10,7],['x2','x₂ חברים באים',0,10,5],['w1','w₁ כמה חשוב לי מזג אוויר',-3,3,1],['w2','w₂ כמה חשוב לי החברים',-3,3,2],['b','b הטיה ("עצלנות")',-20,20,-12]];
+$('sliders').innerHTML=cfg.map(c=>`<div class="sl" id="r_${c[0]}"><span>${c[1]}</span><input type="range" id="${c[0]}" min="${c[2]}" max="${c[3]}" step="1" value="${c[4]}" oninput="calc()"><b class="math" id="${c[0]}v"></b></div>`).join('');
+function calc(){
+  const v={};cfg.forEach(c=>{v[c[0]]=+$(c[0]).value;$(c[0]+'v').textContent=fm(v[c[0]])});
+  const a=v.x1*v.w1,c=v.x2*v.w2,z=a+c+v.b,go=z>=0;
+  $('calc').innerHTML=`w₁·x₁ = ${fm(v.w1)}·${v.x1} = ${fm(a)}<br>w₂·x₂ = ${fm(v.w2)}·${v.x2} = ${fm(c)}<br>b = ${fm(v.b)}`;
+  $('z').textContent='z = '+fm(z);$('mk').style.left=`calc(${Math.max(0,Math.min(1,(z+40)/80))*100}% - 3px)`;
+  $('res').innerHTML=go?'<span class="ok">z ≥ 0 ⇒ ŷ = 1 &nbsp;🏃 יוצאים לטייל!</span>':'<span class="bad">z &lt; 0 ⇒ ŷ = 0 &nbsp;🛋️ נשארים בבית</span>';
+}
+function resetV(){cfg.forEach(c=>$(c[0]).value=c[4]);hl(null);$('cap').textContent='בחרו: מה חשוב לכם יותר – מזג האוויר או החברים?';calc()}
+function hl(k){cfg.forEach(c=>$('r_'+c[0]).classList.toggle('hl',c[0]===k))}
+let busy=false;
+async function move(k,to,cap){
+  $('cap').textContent=cap;hl(k);const el=$(k),from=+el.value;
+  for(let i=1;i<=30;i++){el.value=Math.round(from+(to-from)*i/30);calc();await sleep(35)}
+  await sleep(1800);
+}
+async function story(){
+  if(busy)return;busy=true;$('pl').disabled=true;resetV();await sleep(1200);
+  await move('x1',1,'מה קורה כשמזג האוויר מתקלקל? (x₁ יורד)');
+  await move('x2',9,'אבל החברים מגיעים בהמוניהם! (x₂ עולה)');
+  await move('b',-20,'רגע… היום ממש קשה לי לקום (b יורד)');
+  await move('w1',3,'מזג האוויר חשוב לי יותר (w₁ עולה)');
+  hl(null);$('cap').textContent='זה בדיוק מה שפרספטרון עושה: סכום משוקלל, ואז השוואה לאפס. עכשיו נסו בעצמכם!';
+  busy=false;$('pl').disabled=false;
+}
+calc();
+</script>
+</body>
+</html>
